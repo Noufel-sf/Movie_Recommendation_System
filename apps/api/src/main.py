@@ -78,6 +78,12 @@ def similar_movies(movie_id: int, n: int = Query(10, ge=1, le=30)):
     return {"similar_movies": rec_service.get_similar_movies(movie_id, n=n)}
 
 
+@app.get("/api/v1/spotlights")
+def spotlight_movies(count: int = Query(5, ge=1, le=10)):
+    """Retrieve top spotlight movies with high-res backdrops for hero banner."""
+    return {"spotlights": rec_service.get_spotlights(count=count)}
+
+
 @app.get("/api/v1/trending")
 def trending_movies(n: int = Query(10, ge=1, le=30)):
     """Retrieve top trending movies via time-decay popularity."""

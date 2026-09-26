@@ -2,16 +2,22 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, Flame, Trophy, Film, Layers, Star } from "lucide-react";
+import { Sparkles, Flame, Trophy, Film, Layers } from "lucide-react";
 import { Movie } from "@/types";
-import { fetchMovies, fetchTrending, fetchRecommendations, fetchGenres } from "@/lib/api";
+import {
+  fetchMovies,
+  fetchTrending,
+  fetchSpotlights,
+  fetchRecommendations,
+  fetchGenres,
+} from "@/lib/api";
 
 import Navbar from "@/components/Navbar";
 import HeroBanner from "@/components/HeroBanner";
+import TrendingNumberedCarousel from "@/components/TrendingNumberedCarousel";
 import MovieCarousel from "@/components/MovieCarousel";
 import MovieDetailModal from "@/components/MovieDetailModal";
 import MovieCard from "@/components/MovieCard";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
@@ -20,37 +26,41 @@ export default function HomePage() {
   const [selectedGenre, setSelectedGenre] = useState<string>("All");
   const [activeMovie, setActiveMovie] = useState<Movie | null>(null);
 
-  // 1. Fetch Recommendations for Active Persona
-  const { data: recData, isLoading: isLoadingRecs } = useQuery({
+  // 1. Fetch Spotlights for Hero Banner
+  const { data: spotlightData } = useQuery({
+    queryKey: ["spotlights"],
+    queryFn: () => fetchSpotlights(),
+  });
+
+  // 2. Fetch Recommendations for Active Persona
+  const { data: recData } = useQuery({
     queryKey: ["recommendations", currentUserId],
     queryFn: () => fetchRecommendations(currentUserId, 15),
   });
 
-  // 2. Fetch Trending Movies
+  // 3. Fetch Trending Movies
   const { data: trendingData } = useQuery({
     queryKey: ["trending"],
     queryFn: () => fetchTrending(),
   });
 
-  // 3. Fetch Genres
+  // 4. Fetch Genres
   const { data: genreData } = useQuery({
     queryKey: ["genres"],
     queryFn: () => fetchGenres(),
   });
 
-  // 4. Fetch Paginated Catalog / Search
-  const { data: catalogData, isLoading: isLoadingCatalog } = useQuery({
+  // 5. Fetch Paginated Catalog / Search
+  const { data: catalogData } = useQuery({
     queryKey: ["catalog", selectedGenre, searchQuery],
     queryFn: () => fetchMovies(1, 24, selectedGenre, searchQuery),
   });
 
+  const spotlights = spotlightData?.spotlights || [];
   const recommendations = recData?.recommendations || [];
   const trending = trendingData?.trending || [];
   const genres = ["All", ...(genreData?.genres || [])];
   const catalogMovies = catalogData?.items || [];
-
-  // Flagship movie for Hero Banner
-  const heroMovie = recommendations[0] || trending[0] || null;
 
   return (
     <div className="min-h-screen bg-[#090a0f] text-gray-100 flex flex-col selection:bg-[#e50914] selection:text-white">
@@ -60,10 +70,14 @@ export default function HomePage() {
         onUserChange={setCurrentUserId}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onFilterClick={() => {
+          const el = document.getElementById("catalog-explorer");
+          el?.scrollIntoView({ behavior: "smooth" });
+        }}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 pb-16">
+      {/* Main Content */}
+      <main className="flex-1 pb-20">
         {/* If searching, display search results directly */}
         {searchQuery.trim() ? (
           <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
@@ -82,34 +96,37 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            {/* Hero Showcase Banner */}
-            <HeroBanner movie={heroMovie} onExplore={setActiveMovie} />
+            {/* 1. Hero Spotlight Banner (matching screenshot 1) */}
+            <HeroBanner spotlights={spotlights.length ? spotlights : recommendations.slice(0, 5)} onExplore={setActiveMovie} />
 
-            {/* Recommendation Carousel 1: Personalized Top Picks */}
+            {/* 2. Trending Numbered Carousel (matching screenshot 1) */}
+            <TrendingNumberedCarousel movies={trending} onMovieClick={setActiveMovie} />
+
             <div className="max-w-7xl mx-auto">
+              {/* 3. Top Picks For You (Personalized Matrix Factorization & Hybrid) */}
               <MovieCarousel
                 title={`Top Recommendations for User #${currentUserId}`}
-                subtitle="Ranked via Latent Factor Matrix Factorization & TF-IDF Content Centroids"
+                subtitle="Personalized recommendations ranked via SVD Matrix Factorization & TF-IDF Content vectors"
                 icon={<Sparkles className="h-5 w-5" />}
                 movies={recommendations}
                 onMovieClick={setActiveMovie}
               />
 
-              {/* Recommendation Carousel 2: Trending Now */}
+              {/* 4. Critically Acclaimed (Bayesian IMDB Score) */}
               <MovieCarousel
-                title="Trending Right Now"
-                subtitle="Exponential time-decay popularity weighting recent viewer activity"
-                icon={<Flame className="h-5 w-5" />}
-                movies={trending}
+                title="Critically Acclaimed Hits"
+                subtitle="Top rated classics with high vote density computed via Bayesian shrinkage"
+                icon={<Trophy className="h-5 w-5" />}
+                movies={trending.slice().reverse()}
                 onMovieClick={setActiveMovie}
               />
 
-              {/* Genre Filter Pills & Catalog Explorer */}
-              <section className="mt-12 px-4 md:px-8">
+              {/* 5. Genre Catalog Explorer */}
+              <section id="catalog-explorer" className="mt-14 px-4 md:px-8">
                 <div className="flex items-center gap-2 mb-4">
                   <Layers className="h-5 w-5 text-[#e50914]" />
                   <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-                    Explore Movie Catalog
+                    Explore Catalog by Genre
                   </h3>
                 </div>
 
@@ -123,8 +140,8 @@ export default function HomePage() {
                       onClick={() => setSelectedGenre(g)}
                       className={`rounded-full text-xs font-semibold px-4 py-1.5 transition-all ${
                         selectedGenre === g
-                          ? "bg-[#e50914] text-white border-[#e50914] shadow-md shadow-[#e50914]/30 hover:bg-[#e50914]"
-                          : "bg-[#11131a] text-gray-400 border-[#222638] hover:text-white hover:border-[#e50914]/40"
+                          ? "bg-[#e50914] text-white border-[#e50914] shadow-lg shadow-[#e50914]/30 hover:bg-[#ff2430]"
+                          : "bg-[#12141d] text-gray-400 border-[#222638] hover:text-white hover:border-[#e50914]/50"
                       }`}
                     >
                       {g}
@@ -144,7 +161,7 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Movie Detail & Live Interactive Rating Modal */}
+      {/* Movie Detail & Live Interactive Rating Modal (matching screenshot 2) */}
       <MovieDetailModal
         movie={activeMovie}
         currentUserId={currentUserId}

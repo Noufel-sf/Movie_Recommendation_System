@@ -9,6 +9,13 @@ export interface Movie {
   match_score?: number;
   explanation?: string;
   similarity_score?: number;
+  poster_url?: string;
+  backdrop_url?: string;
+  overview?: string;
+  runtime?: number;
+  vote_average?: number;
+  vote_count?: number;
+  tagline?: string;
 }
 
 export interface PaginatedMovies {
