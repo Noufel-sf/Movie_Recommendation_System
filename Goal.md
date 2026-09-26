@@ -893,9 +893,6 @@ Give me questions an ML engineer could ask about this.
 
 Ask me 3–5 questions that test whether I actually understand the concept.
 
-Do NOT immediately give me the answers.
-
-Wait for my answers and correct my misunderstandings.
 
 ==================================================
 CODING RULES
