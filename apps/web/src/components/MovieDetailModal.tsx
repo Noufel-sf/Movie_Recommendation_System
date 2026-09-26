@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Star, Sparkles, X, Check, Play, Film, Clock, Calendar, Share2, Layers } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Movie } from "@/types";
@@ -143,6 +144,15 @@ export default function MovieDetailModal({
                   <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400 mr-1.5" />
                   {isRatingOpen ? "Close Rating" : "★ Rate Movie"}
                 </Button>
+
+                <Link href={`/movies/${movie.movie_id}`}>
+                  <Button
+                    variant="outline"
+                    className="border-white/20 bg-[#161a29] hover:bg-[#202538] text-gray-200 text-xs h-10 px-4 rounded-full"
+                  >
+                    Full Page Details ›
+                  </Button>
+                </Link>
               </div>
 
               {/* Interactive Rating Dropdown */}

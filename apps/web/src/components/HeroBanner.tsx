@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Play, ChevronRight, ChevronLeft, Calendar, Clock, Star, Sparkles } from "lucide-react";
 import { Movie } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -103,13 +104,14 @@ export default function HeroBanner({ spotlights, onExplore }: HeroBannerProps) {
               <Play className="h-4 w-4 fill-white" /> Watch Now
             </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => onExplore(currentMovie)}
-              className="border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 h-11 px-6 rounded-full gap-1.5 text-sm transition-all"
-            >
-              Detail <ChevronRight className="h-4 w-4" />
-            </Button>
+            <Link href={`/movies/${currentMovie.movie_id}`}>
+              <Button
+                variant="outline"
+                className="border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 h-11 px-6 rounded-full gap-1.5 text-sm transition-all"
+              >
+                Detail <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
