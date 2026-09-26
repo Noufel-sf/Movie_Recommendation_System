@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 
 interface HeroBannerProps {
   spotlights: Movie[];
-  onExplore: (movie: Movie) => void;
+  onExplore?: (movie: Movie) => void;
 }
 
-export default function HeroBanner({ spotlights, onExplore }: HeroBannerProps) {
+export default function HeroBanner({ spotlights }: HeroBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!spotlights || spotlights.length === 0) return null;
@@ -97,12 +97,13 @@ export default function HeroBanner({ spotlights, onExplore }: HeroBannerProps) {
 
           {/* Action Buttons: Watch Now (Pill) & Detail (Glass Pill) */}
           <div className="flex items-center gap-3">
-            <Button
-              onClick={() => onExplore(currentMovie)}
-              className="bg-[#e50914] hover:bg-[#ff2430] text-white font-extrabold h-11 px-7 rounded-full shadow-xl shadow-[#e50914]/40 gap-2 text-sm transition-transform active:scale-95"
-            >
-              <Play className="h-4 w-4 fill-white" /> Watch Now
-            </Button>
+            <Link href={`/movies/${currentMovie.movie_id}`}>
+              <Button
+                className="bg-[#e50914] hover:bg-[#ff2430] text-white font-extrabold h-11 px-7 rounded-full shadow-xl shadow-[#e50914]/40 gap-2 text-sm transition-transform active:scale-95"
+              >
+                <Play className="h-4 w-4 fill-white" /> Watch Now
+              </Button>
+            </Link>
 
             <Link href={`/movies/${currentMovie.movie_id}`}>
               <Button

@@ -1,18 +1,17 @@
 "use client";
 
 import { useRef } from "react";
-import { ChevronLeft, ChevronRight, Flame, Play } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { Movie } from "@/types";
 import { Button } from "@/components/ui/button";
 
 interface TrendingNumberedCarouselProps {
   movies: Movie[];
-  onMovieClick: (movie: Movie) => void;
 }
 
 export default function TrendingNumberedCarousel({
   movies,
-  onMovieClick,
 }: TrendingNumberedCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -67,10 +66,10 @@ export default function TrendingNumberedCarousel({
         {movies.slice(0, 10).map((movie, index) => {
           const rank = index + 1;
           return (
-            <div
+            <Link
               key={movie.movie_id}
-              onClick={() => onMovieClick(movie)}
-              className="group relative flex-none w-44 md:w-48 cursor-pointer rounded-xl overflow-hidden bg-[#11131a] border border-[#202436] hover:border-[#e50914] transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#e50914]/20"
+              href={`/movies/${movie.movie_id}`}
+              className="group relative flex-none w-44 md:w-48 cursor-pointer rounded-xl overflow-hidden bg-[#11131a] border border-[#202436] hover:border-[#e50914] transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-[#e50914]/20 block focus:outline-none"
             >
               {/* Poster Container */}
               <div className="relative h-64 md:h-72 w-full overflow-hidden bg-[#151824]">
@@ -81,7 +80,6 @@ export default function TrendingNumberedCarousel({
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                     onError={(e) => {
-                      // Fallback if poster fails to load
                       (e.target as HTMLImageElement).src =
                         "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&auto=format&fit=crop&q=80";
                     }}
@@ -95,7 +93,7 @@ export default function TrendingNumberedCarousel({
                 {/* Bottom Shadow Gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
 
-                {/* Big Stylized Rank Number at bottom-left (matching reference screenshot) */}
+                {/* Big Stylized Rank Number at bottom-left */}
                 <div className="absolute left-2.5 bottom-1 z-20 flex items-baseline">
                   <span className="text-5xl md:text-6xl font-black italic tracking-tighter text-[#38bdf8] drop-shadow-[0_2px_10px_rgba(56,189,248,0.5)]">
                     {rank}
@@ -120,7 +118,7 @@ export default function TrendingNumberedCarousel({
                   <span className="text-amber-400 font-semibold">★ {movie.score?.toFixed(1) || "4.2"}</span>
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>

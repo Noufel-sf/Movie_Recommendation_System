@@ -16,7 +16,6 @@ import Navbar from "@/components/Navbar";
 import HeroBanner from "@/components/HeroBanner";
 import TrendingNumberedCarousel from "@/components/TrendingNumberedCarousel";
 import MovieCarousel from "@/components/MovieCarousel";
-import MovieDetailModal from "@/components/MovieDetailModal";
 import MovieCard from "@/components/MovieCard";
 import { Button } from "@/components/ui/button";
 
@@ -24,7 +23,6 @@ export default function HomePage() {
   const [currentUserId, setCurrentUserId] = useState<number>(15);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedGenre, setSelectedGenre] = useState<string>("All");
-  const [activeMovie, setActiveMovie] = useState<Movie | null>(null);
 
   // 1. Fetch Spotlights for Hero Banner
   const { data: spotlightData } = useQuery({
@@ -90,17 +88,17 @@ export default function HomePage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {catalogMovies.map((movie) => (
-                <MovieCard key={movie.movie_id} movie={movie} onClick={setActiveMovie} />
+                <MovieCard key={movie.movie_id} movie={movie} />
               ))}
             </div>
           </div>
         ) : (
           <>
             {/* 1. Hero Spotlight Banner (matching screenshot 1) */}
-            <HeroBanner spotlights={spotlights.length ? spotlights : recommendations.slice(0, 5)} onExplore={setActiveMovie} />
+            <HeroBanner spotlights={spotlights.length ? spotlights : recommendations.slice(0, 5)} />
 
             {/* 2. Trending Numbered Carousel (matching screenshot 1) */}
-            <TrendingNumberedCarousel movies={trending} onMovieClick={setActiveMovie} />
+            <TrendingNumberedCarousel movies={trending} />
 
             <div className="max-w-7xl mx-auto">
               {/* 3. Top Picks For You (Personalized Matrix Factorization & Hybrid) */}
@@ -109,7 +107,6 @@ export default function HomePage() {
                 subtitle="Personalized recommendations ranked via SVD Matrix Factorization & TF-IDF Content vectors"
                 icon={<Sparkles className="h-5 w-5" />}
                 movies={recommendations}
-                onMovieClick={setActiveMovie}
               />
 
               {/* 4. Critically Acclaimed (Bayesian IMDB Score) */}
@@ -118,7 +115,6 @@ export default function HomePage() {
                 subtitle="Top rated classics with high vote density computed via Bayesian shrinkage"
                 icon={<Trophy className="h-5 w-5" />}
                 movies={trending.slice().reverse()}
-                onMovieClick={setActiveMovie}
               />
 
               {/* 5. Genre Catalog Explorer */}
@@ -152,7 +148,7 @@ export default function HomePage() {
                 {/* Catalog Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {catalogMovies.map((movie) => (
-                    <MovieCard key={movie.movie_id} movie={movie} onClick={setActiveMovie} />
+                    <MovieCard key={movie.movie_id} movie={movie} />
                   ))}
                 </div>
               </section>
@@ -160,14 +156,6 @@ export default function HomePage() {
           </>
         )}
       </main>
-
-      {/* Movie Detail & Live Interactive Rating Modal (matching screenshot 2) */}
-      <MovieDetailModal
-        movie={activeMovie}
-        currentUserId={currentUserId}
-        onClose={() => setActiveMovie(null)}
-        onSelectSimilar={setActiveMovie}
-      />
     </div>
   );
 }

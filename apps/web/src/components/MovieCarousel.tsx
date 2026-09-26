@@ -11,7 +11,6 @@ interface MovieCarouselProps {
   subtitle?: string;
   icon?: React.ReactNode;
   movies: Movie[];
-  onMovieClick: (movie: Movie) => void;
 }
 
 export default function MovieCarousel({
@@ -19,7 +18,6 @@ export default function MovieCarousel({
   subtitle,
   icon,
   movies,
-  onMovieClick,
 }: MovieCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +69,7 @@ export default function MovieCarousel({
         className="flex items-stretch gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-4"
       >
         {movies.map((movie) => (
-          <MovieCard key={movie.movie_id} movie={movie} onClick={onMovieClick} />
+          <MovieCard key={movie.movie_id} movie={movie} />
         ))}
       </div>
     </section>
