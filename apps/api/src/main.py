@@ -94,11 +94,11 @@ def trending_movies(n: int = Query(10, ge=1, le=30)):
 def personalized_recommendations(
     user_id: int = Query(..., ge=1),
     n: int = Query(10, ge=1, le=30),
-    model: str = Query("svd", description="Recommendation algorithm: svd, content, or popularity"),
+    model: str = Query("hybrid", description="Recommendation algorithm: hybrid, svd, content, or popularity"),
 ):
     """
     Retrieve personalized top-N recommendations with model-derived explanations.
-    Supports algorithm selection: 'svd' (Matrix Factorization), 'content' (TF-IDF), or 'popularity'.
+    Supports algorithm selection: 'hybrid' (Weighted SVD+Content+Bayesian), 'svd', 'content', or 'popularity'.
     """
     recs = rec_service.get_recommendations(user_id=user_id, n=n, model_type=model)
     return {"user_id": user_id, "model": model, "recommendations": recs}

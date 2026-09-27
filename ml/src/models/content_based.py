@@ -37,7 +37,8 @@ class ContentBasedRecommender(BaseRecommender):
         # Combine title and genres into a descriptive document string
         # e.g. "Toy Story Adventure Animation Children Comedy"
         clean_genres = movies_df["genres"].fillna("").str.replace("|", " ", regex=False)
-        documents = (movies_df["clean_title"] + " " + clean_genres).tolist()
+        title_col = movies_df["clean_title"] if "clean_title" in movies_df.columns else movies_df["title"]
+        documents = (title_col.fillna("") + " " + clean_genres).tolist()
         
         if self.use_tfidf:
             vectorizer = ManualTfidfVectorizer()

@@ -24,7 +24,7 @@ export default function HomePage() {
   const [currentUserId, setCurrentUserId] = useState<number>(15);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedGenre, setSelectedGenre] = useState<string>("All");
-  const [activeModel, setActiveModel] = useState<"svd" | "content" | "popularity">("svd");
+  const [activeModel, setActiveModel] = useState<"hybrid" | "svd" | "content" | "popularity">("hybrid");
 
   // 1. Fetch Spotlights for Hero Banner
   const { data: spotlightData } = useQuery({
@@ -116,6 +116,17 @@ export default function HomePage() {
                 isLoading={isLoadingRecs}
                 headerAction={
                   <div className="flex items-center gap-1.5 bg-[#12141d] p-1 rounded-xl border border-[#222638]">
+                    <button
+                      type="button"
+                      onClick={() => setActiveModel("hybrid")}
+                      className={`cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all ${
+                        activeModel === "hybrid"
+                          ? "bg-[#e50914] text-white shadow-md shadow-[#e50914]/30"
+                          : "text-gray-400 hover:text-white"
+                      }`}
+                    >
+                      ⚡ Hybrid Ensemble
+                    </button>
                     <button
                       type="button"
                       onClick={() => setActiveModel("svd")}

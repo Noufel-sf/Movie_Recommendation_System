@@ -6,6 +6,7 @@ import numpy as np
 from ml.src.models.baseline import IMDBWeightedRecommender, TimeDecayPopularityRecommender
 from ml.src.models.content_based import ContentBasedRecommender
 from ml.src.models.matrix_factorization import ExplicitSGDMatrixFactorization
+from ml.src.models.hybrid import HybridRecommender
 
 # Curated fallback posters by genre
 GENRE_FALLBACK_IMAGES = {
@@ -39,6 +40,7 @@ class RecommendationEngineService:
         self.trending_model: TimeDecayPopularityRecommender = None
         self.content_model: ContentBasedRecommender = None
         self.mf_model: ExplicitSGDMatrixFactorization = None
+        self.hybrid_model: HybridRecommender = None
 
         # Dynamic user additions
         self.dynamic_ratings: list[dict] = []
@@ -83,6 +85,16 @@ class RecommendationEngineService:
             n_epochs=10, 
             random_state=42
         ).fit(self.ratings_df)
+
+        print("Fitting Hybrid Recommender (60% SVD + 25% Content + 15% Bayesian)...")
+        self.hybrid_model = HybridRecommender(
+            alpha=0.60,
+            beta=0.25,
+            gamma=0.15,
+            mf_model=self.mf_model,
+            content_model=self.content_model,
+            popularity_model=self.popularity_model,
+        ).fit(self.ratings_df, self.movies_df)
 
         print("RecommendationEngineService ready!")
 
@@ -137,15 +149,17 @@ class RecommendationEngineService:
                 results.append(detail)
         return results
 
-    def get_recommendations(self, user_id: int, n: int = 10, model_type: str = "svd"):
+    def get_recommendations(self, user_id: int, n: int = 10, model_type: str = "hybrid"):
         user_has_history = user_id in self.mf_model.user_to_idx
 
         if model_type == "content":
             recs_to_format = self.content_model.recommend(user_id, n=n, exclude_seen=True)
-        elif model_type == "popularity" or not user_has_history:
+        elif model_type == "popularity":
             recs_to_format = self.popularity_model.recommend(user_id, n=n, exclude_seen=True)
-        else:
-            recs_to_format = self.mf_model.recommend(user_id, n=n, exclude_seen=True)
+        elif model_type == "svd":
+            recs_to_format = self.mf_model.recommend(user_id, n=n, exclude_seen=True) if user_has_history else self.popularity_model.recommend(user_id, n=n, exclude_seen=True)
+        else:  # "hybrid" default
+            recs_to_format = self.hybrid_model.recommend(user_id, n=n, exclude_seen=True)
 
         results = []
         for mid, score in recs_to_format:
@@ -156,11 +170,11 @@ class RecommendationEngineService:
                     detail["explanation"] = "TF-IDF profile match on genres & synopsis keywords"
                 elif model_type == "popularity":
                     detail["explanation"] = "Bayesian weighted popularity across all community ratings"
-                elif user_has_history:
-                    explanation = self.content_model.explain_recommendation(user_id, mid)
+                elif model_type == "svd":
+                    explanation = self.content_model.explain_recommendation(user_id, mid) if user_has_history else {}
                     detail["explanation"] = explanation.get("reason", "SVD latent factor taste alignment")
                 else:
-                    detail["explanation"] = "Trending choice popular among all viewers"
+                    detail["explanation"] = "Hybrid ensemble of SVD latent tastes, genres & community appeal"
                 results.append(detail)
 
         return results

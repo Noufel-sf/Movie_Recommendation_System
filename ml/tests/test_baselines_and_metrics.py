@@ -3,7 +3,15 @@ import math
 import pandas as pd
 import numpy as np
 
-from ml.src.evaluation.metrics import rmse, mae, precision_at_k, recall_at_k, ndcg_at_k
+from ml.src.evaluation.metrics import (
+    rmse,
+    mae,
+    precision_at_k,
+    recall_at_k,
+    ndcg_at_k,
+    average_precision_at_k,
+    catalog_coverage,
+)
 from ml.src.models.baseline import (
     MostPopularRecommender,
     IMDBWeightedRecommender,
@@ -84,3 +92,17 @@ def test_most_popular_and_exclude_seen():
     recs = model.recommend(user_id=2, n=1, exclude_seen=True)
     assert len(recs) == 1
     assert recs[0][0] == 20
+
+
+def test_map_at_k_and_catalog_coverage():
+    # Recommended: [10, 20, 30], relevant: {10, 30}
+    # Hit at 1 (rank 1): P@1 = 1/1 = 1.0
+    # Hit at 3 (rank 3): P@3 = 2/3
+    # AP@3 = (1.0 + 2/3) / 2 = 1.666... / 2 = 0.8333...
+    ap = average_precision_at_k([10, 20, 30], {10, 30}, k=3)
+    assert math.isclose(ap, (1.0 + 2.0 / 3.0) / 2.0, rel_tol=1e-5)
+
+    # Coverage across 2 users recommending 3 unique items out of 10 total catalog items = 30%
+    recs_all = [[10, 20], [20, 30]]
+    cov = catalog_coverage(recs_all, total_catalog_size=10)
+    assert cov == 0.3

@@ -102,3 +102,44 @@ def ndcg_at_k(
         return 0.0
 
     return dcg / idcg
+
+
+def average_precision_at_k(
+    recommended_ids: list[int],
+    actual_relevant_ids: set[int] | list[int],
+    k: int = 10,
+) -> float:
+    """
+    Average Precision at K (AP@K):
+    Computes the average of precision scores calculated at each position where a relevant item is found.
+    Rewards having relevant items ranked early.
+    """
+    if k <= 0:
+        return 0.0
+    relevant_set = set(actual_relevant_ids)
+    if len(relevant_set) == 0:
+        return 0.0
+
+    top_k = recommended_ids[:k]
+    score = 0.0
+    hits = 0
+
+    for i, item_id in enumerate(top_k):
+        if item_id in relevant_set:
+            hits += 1
+            # Precision at rank (i + 1)
+            score += hits / (i + 1)
+
+    return score / min(k, len(relevant_set))
+
+
+def catalog_coverage(all_recommended_ids: list[list[int]], total_catalog_size: int) -> float:
+    """
+    Catalog Coverage:
+    The percentage of unique movies in the catalog that are recommended at least once across all users.
+    Formula: (# unique recommended movies) / (total unique movies in catalog)
+    """
+    if total_catalog_size <= 0:
+        return 0.0
+    unique_recs = set(item for sublist in all_recommended_ids for item in sublist)
+    return len(unique_recs) / total_catalog_size
