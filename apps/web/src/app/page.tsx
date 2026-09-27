@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Sparkles, Trophy, Layers, Sliders } from "lucide-react";
+import { Sparkles, Trophy, Layers, Zap, Flame, Compass } from "lucide-react";
 import { Movie } from "@/types";
 import {
   fetchMovies,
@@ -63,7 +63,7 @@ export default function HomePage() {
   const catalogMovies = catalogData?.items || [];
 
   return (
-    <div className="min-h-screen bg-[#090a0f] text-gray-100 flex flex-col selection:bg-[#e50914] selection:text-white">
+    <div className="min-h-screen bg-[#090a0f] text-gray-100 flex flex-col selection:bg-[#e50914] selection:text-white relative">
       {/* Top Navbar with Instant Autocomplete */}
       <Navbar
         currentUserId={currentUserId}
@@ -80,8 +80,8 @@ export default function HomePage() {
       <main className="flex-1 pb-20">
         {/* If searching, display search results directly */}
         {searchQuery.trim() ? (
-          <div className="max-w-7xl mx-auto px-4 md:px-8 pt-8">
-            <h2 className="text-2xl font-bold text-white mb-2">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">
               Search Results for <span className="text-[#e50914]">"{searchQuery}"</span>
             </h2>
             <p className="text-xs text-gray-400 mb-6">
@@ -100,65 +100,69 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            {/* 1. Hero Spotlight Banner with Bottom Poster Strip & Trailer Modal */}
+            {/* 1. Cinematic Centered Hero Spotlight Banner */}
             <HeroBanner spotlights={spotlights.length ? spotlights : recommendations.slice(0, 8)} />
 
-            {/* 2. Trending Numbered Carousel (Top 10 Live) */}
+            {/* 2. Top 10 Trending Live Carousel */}
             <TrendingNumberedCarousel movies={trending} />
 
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-[1440px] mx-auto">
               {/* 3. Top Picks For You with Interactive Model Switcher Tabs */}
               <MovieCarousel
                 title={`Top Recommendations for User #${currentUserId}`}
-                subtitle="Compare AI recommendations computed live via different algorithms"
+                subtitle="Live personalized ranking engine comparing algorithmic paradigms"
                 icon={<Sparkles className="h-5 w-5" />}
                 movies={recommendations}
                 isLoading={isLoadingRecs}
                 headerAction={
-                  <div className="flex items-center gap-1.5 bg-[#12141d] p-1 rounded-xl border border-[#222638]">
+                  <div className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/10 backdrop-blur-md">
                     <button
                       type="button"
                       onClick={() => setActiveModel("hybrid")}
-                      className={`cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all ${
+                      className={`cursor-pointer text-[11px] font-bold px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
                         activeModel === "hybrid"
-                          ? "bg-[#e50914] text-white shadow-md shadow-[#e50914]/30"
-                          : "text-gray-400 hover:text-white"
+                          ? "bg-[#e50914] text-white shadow-lg shadow-[#e50914]/40"
+                          : "text-gray-300 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      ⚡ Hybrid Ensemble
+                      <Zap className="h-3 w-3" />
+                      <span>Hybrid</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveModel("svd")}
-                      className={`cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all ${
+                      className={`cursor-pointer text-[11px] font-bold px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
                         activeModel === "svd"
-                          ? "bg-[#e50914] text-white shadow-md shadow-[#e50914]/30"
-                          : "text-gray-400 hover:text-white"
+                          ? "bg-[#e50914] text-white shadow-lg shadow-[#e50914]/40"
+                          : "text-gray-300 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      ✨ SVD Latent
+                      <Sparkles className="h-3 w-3" />
+                      <span>SVD Latent</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveModel("content")}
-                      className={`cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all ${
+                      className={`cursor-pointer text-[11px] font-bold px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
                         activeModel === "content"
-                          ? "bg-[#e50914] text-white shadow-md shadow-[#e50914]/30"
-                          : "text-gray-400 hover:text-white"
+                          ? "bg-[#e50914] text-white shadow-lg shadow-[#e50914]/40"
+                          : "text-gray-300 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      🎯 TF-IDF Content
+                      <Compass className="h-3 w-3" />
+                      <span>Content TF-IDF</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveModel("popularity")}
-                      className={`cursor-pointer text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all ${
+                      className={`cursor-pointer text-[11px] font-bold px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 ${
                         activeModel === "popularity"
-                          ? "bg-[#e50914] text-white shadow-md shadow-[#e50914]/30"
-                          : "text-gray-400 hover:text-white"
+                          ? "bg-[#e50914] text-white shadow-lg shadow-[#e50914]/40"
+                          : "text-gray-300 hover:text-white hover:bg-white/5"
                       }`}
                     >
-                      🏆 Bayesian IMDB
+                      <Trophy className="h-3 w-3" />
+                      <span>Bayesian IMDB</span>
                     </button>
                   </div>
                 }
@@ -174,12 +178,17 @@ export default function HomePage() {
               />
 
               {/* 5. Genre Catalog Explorer */}
-              <section id="catalog-explorer" className="mt-14 px-4 md:px-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <Layers className="h-5 w-5 text-[#e50914]" />
-                  <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-                    Explore Catalog by Genre
-                  </h3>
+              <section id="catalog-explorer" className="mt-14 px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="h-7 w-7 rounded-lg bg-[#e50914]/20 border border-[#e50914]/30 flex items-center justify-center">
+                    <Layers className="h-4 w-4 text-[#e50914]" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                      Explore Catalog by Genre
+                    </h3>
+                    <p className="text-xs text-gray-400">Filter over 9,000 titles by cinematic category</p>
+                  </div>
                 </div>
 
                 {/* Genre Tabs */}
@@ -192,8 +201,8 @@ export default function HomePage() {
                       onClick={() => setSelectedGenre(g)}
                       className={`cursor-pointer rounded-full text-xs font-semibold px-4 py-1.5 transition-all ${
                         selectedGenre === g
-                          ? "bg-[#e50914] text-white border-[#e50914] shadow-lg shadow-[#e50914]/30 hover:bg-[#ff2430]"
-                          : "bg-[#12141d] text-gray-400 border-[#222638] hover:text-white hover:border-[#e50914]/50"
+                          ? "bg-[#e50914] text-white border-[#e50914] shadow-lg shadow-[#e50914]/30 hover:bg-[#ff1e2b]"
+                          : "bg-white/5 text-gray-300 border-white/10 hover:text-white hover:bg-white/10"
                       }`}
                     >
                       {g}
