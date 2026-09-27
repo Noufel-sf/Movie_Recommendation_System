@@ -11,7 +11,7 @@ interface HeroBannerProps {
   onExplore?: (movie: Movie) => void;
 }
 
-export default function HeroBanner({ spotlights }: HeroBannerProps) {
+export default function HeroBanner({ spotlights, onExplore }: HeroBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!spotlights || spotlights.length === 0) return null;
@@ -99,7 +99,8 @@ export default function HeroBanner({ spotlights }: HeroBannerProps) {
           <div className="flex items-center gap-3">
             <Link href={`/movies/${currentMovie.movie_id}`}>
               <Button
-                className="bg-[#e50914] hover:bg-[#ff2430] text-white font-extrabold h-11 px-7 rounded-full shadow-xl shadow-[#e50914]/40 gap-2 text-sm transition-transform active:scale-95"
+                onClick={() => onExplore?.(currentMovie)}
+                className="cursor-pointer bg-[#e50914] hover:bg-[#ff2430] text-white font-extrabold h-11 px-7 rounded-full shadow-xl shadow-[#e50914]/40 gap-2 text-sm transition-transform active:scale-95"
               >
                 <Play className="h-4 w-4 fill-white" /> Watch Now
               </Button>
@@ -108,7 +109,8 @@ export default function HeroBanner({ spotlights }: HeroBannerProps) {
             <Link href={`/movies/${currentMovie.movie_id}`}>
               <Button
                 variant="outline"
-                className="border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 h-11 px-6 rounded-full gap-1.5 text-sm transition-all"
+                onClick={() => onExplore?.(currentMovie)}
+                className="cursor-pointer border-white/20 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 h-11 px-6 rounded-full gap-1.5 text-sm transition-all"
               >
                 Detail <ChevronRight className="h-4 w-4" />
               </Button>

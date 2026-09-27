@@ -4,6 +4,7 @@ import { Film, User, Search, Sparkles, Send, SlidersHorizontal } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface NavbarProps {
   currentUserId: number;
@@ -36,10 +37,10 @@ export default function Navbar({
             <div className="h-9 w-9 rounded-lg bg-[#e50914] flex items-center justify-center shadow-lg shadow-[#e50914]/30">
               <Film className="h-5 w-5 text-white" />
             </div>
-            <div className="flex items-baseline gap-1.5">
+            <Link href="/" className="flex items-baseline gap-1.5">
               <span className="font-black text-xl tracking-wider text-white">CINEMATCH</span>
               <span className="text-[10px] font-bold text-[#e50914] tracking-widest uppercase">AI</span>
-            </div>
+            </Link>
           </div>
         </div>
 

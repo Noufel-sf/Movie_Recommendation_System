@@ -1,0 +1,13 @@
+{
+  "name": "movie-recommendation-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-End Movie Recommendation Platform",
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "dev:web": "npm --prefix apps/web run dev",
+    "dev:api": "powershell -Command \"$env:PYTHONPATH='.'; .\\.venv\\Scripts\\uvicorn apps.api.src.main:app --host 127.0.0.1 --port 8000 --reload\"",
+    "build": "npm --prefix apps/web run build",
+    "test:ml": "powershell -Command \"$env:PYTHONPATH='.'; .\\.venv\\Scripts\\pytest -v\""
+  }
+}

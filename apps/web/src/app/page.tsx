@@ -88,7 +88,7 @@ export default function HomePage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {catalogMovies.map((movie) => (
-                <MovieCard key={movie.movie_id} movie={movie} />
+                <MovieCard key={movie.movie_id} movie={movie} className="w-full" />
               ))}
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function HomePage() {
                 {/* Catalog Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {catalogMovies.map((movie) => (
-                    <MovieCard key={movie.movie_id} movie={movie} />
+                    <MovieCard key={movie.movie_id} movie={movie} className="w-full" />
                   ))}
                 </div>
               </section>
