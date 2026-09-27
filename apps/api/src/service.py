@@ -137,24 +137,28 @@ class RecommendationEngineService:
                 results.append(detail)
         return results
 
-    def get_recommendations(self, user_id: int, n: int = 10):
+    def get_recommendations(self, user_id: int, n: int = 10, model_type: str = "svd"):
         user_has_history = user_id in self.mf_model.user_to_idx
-        
-        if user_has_history:
-            mf_recs = self.mf_model.recommend(user_id, n=n, exclude_seen=True)
-            recs_to_format = mf_recs
+
+        if model_type == "content":
+            recs_to_format = self.content_model.recommend(user_id, n=n, exclude_seen=True)
+        elif model_type == "popularity" or not user_has_history:
+            recs_to_format = self.popularity_model.recommend(user_id, n=n, exclude_seen=True)
         else:
-            pop_recs = self.popularity_model.recommend(user_id, n=n, exclude_seen=True)
-            recs_to_format = pop_recs
+            recs_to_format = self.mf_model.recommend(user_id, n=n, exclude_seen=True)
 
         results = []
         for mid, score in recs_to_format:
             detail = self.get_movie_detail(mid)
             if detail:
                 detail["match_score"] = round(float(score), 2)
-                if user_has_history:
+                if model_type == "content":
+                    detail["explanation"] = "TF-IDF profile match on genres & synopsis keywords"
+                elif model_type == "popularity":
+                    detail["explanation"] = "Bayesian weighted popularity across all community ratings"
+                elif user_has_history:
                     explanation = self.content_model.explain_recommendation(user_id, mid)
-                    detail["explanation"] = explanation.get("reason", "Matches your taste profile")
+                    detail["explanation"] = explanation.get("reason", "SVD latent factor taste alignment")
                 else:
                     detail["explanation"] = "Trending choice popular among all viewers"
                 results.append(detail)
