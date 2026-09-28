@@ -49,6 +49,8 @@ class RecommendationEngineService:
 
         # Dynamic user additions
         self.dynamic_ratings: list[dict] = []
+        self.user_likes: dict[int, list[int]] = {}
+        self.watch_history: dict[int, list[dict]] = {}
 
     def initialize(self):
         print("Initializing RecommendationEngineService...")
@@ -290,6 +292,112 @@ class RecommendationEngineService:
         self.content_model.user_history[user_id].append((movie_id, rating))
         self.content_model.user_profiles[user_id] = self.content_model._build_user_profile(user_id)
         return entry
+
+    def search_movies(self, query: str, page: int = 1, page_size: int = 20):
+        """Dedicated movie search endpoint."""
+        return self.get_movies(page=page, page_size=page_size, query=query)
+
+    def add_like(self, user_id: int, movie_id: int):
+        """
+        Record implicit positive feedback (Like).
+        Treats like as implicit 5.0 signal and updates user taste profile.
+        """
+        if user_id not in self.user_likes:
+            self.user_likes[user_id] = []
+        if movie_id not in self.user_likes[user_id]:
+            self.user_likes[user_id].append(movie_id)
+
+        # Update real-time content profile with implicit 5.0
+        self.add_rating(user_id, movie_id, 5.0)
+        return {
+            "user_id": user_id,
+            "movie_id": movie_id,
+            "action": "like",
+            "total_likes": len(self.user_likes[user_id]),
+        }
+
+    def add_watch_history(
+        self,
+        user_id: int,
+        movie_id: int,
+        watch_percentage: float = 1.0,
+        completed: bool = True,
+    ):
+        """
+        Record implicit consumption behavior (watch duration / completion).
+        If user watched >= 80% of movie, it serves as positive implicit feedback.
+        """
+        if user_id not in self.watch_history:
+            self.watch_history[user_id] = []
+
+        event = {
+            "movie_id": movie_id,
+            "watch_percentage": round(float(watch_percentage), 2),
+            "completed": completed,
+        }
+        self.watch_history[user_id].append(event)
+
+        # If user watched >= 80% (0.80), register positive implicit preference
+        if watch_percentage >= 0.8:
+            implicit_score = 4.5 if watch_percentage >= 0.95 else 4.0
+            self.add_rating(user_id, movie_id, implicit_score)
+
+        return {
+            "user_id": user_id,
+            "event": event,
+            "total_watched": len(self.watch_history[user_id]),
+        }
+
+    def get_user_profile(self, user_id: int):
+        """
+        Retrieve comprehensive user profile:
+        - ratings history & count
+        - likes & watch history
+        - top preferred genres
+        - profile status (cold-start vs established)
+        """
+        # Collect ratings from training set
+        historical_ratings = self.ratings_df[self.ratings_df["user_id"] == user_id]
+        ratings_list = []
+        for _, row in historical_ratings.iterrows():
+            ratings_list.append({
+                "movie_id": int(row["movie_id"]),
+                "rating": float(row["rating"]),
+            })
+        # Add dynamic ratings
+        for r in self.dynamic_ratings:
+            if r["user_id"] == user_id:
+                ratings_list.append(r)
+
+        # Calculate genre preferences
+        genre_counts = {}
+        for r in ratings_list:
+            detail = self.get_movie_detail(r["movie_id"])
+            if detail and "genres_list" in detail:
+                weight = r["rating"] / 5.0
+                for g in detail["genres_list"]:
+                    genre_counts[g] = genre_counts.get(g, 0.0) + weight
+
+        top_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        is_cold_start = len(ratings_list) == 0 and (
+            not self.cold_start_engine or user_id not in self.cold_start_engine.user_centroids
+        )
+
+        likes = self.user_likes.get(user_id, [])
+        watches = self.watch_history.get(user_id, [])
+
+        return {
+            "user_id": user_id,
+            "is_cold_start": is_cold_start,
+            "total_ratings": len(ratings_list),
+            "average_rating": round(float(np.mean([r["rating"] for r in ratings_list])), 2) if ratings_list else None,
+            "likes_count": len(likes),
+            "watch_history_count": len(watches),
+            "top_genres": [{"genre": g, "affinity_score": round(score, 2)} for g, score in top_genres],
+            "recent_ratings": ratings_list[-10:],
+            "likes": likes[-10:],
+            "watch_history": watches[-10:],
+        }
 
 
 # Global engine instance

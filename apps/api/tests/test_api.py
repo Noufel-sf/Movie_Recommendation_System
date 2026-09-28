@@ -99,3 +99,47 @@ def test_complete_onboarding_and_recommendations(client):
     recs = rec_res.json()["recommendations"]
     assert len(recs) == 5
     assert "Matches your taste" in recs[0]["explanation"] or "Matches" in recs[0]["explanation"]
+
+
+def test_search_movies_endpoint(client):
+    response = client.get("/api/v1/movies/search?q=Toy+Story")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] > 0
+    assert any("Toy Story" in m["title"] for m in data["items"])
+
+
+def test_likes_endpoint(client):
+    payload = {"user_id": 999, "movie_id": 260}
+    response = client.post("/api/v1/likes", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["data"]["action"] == "like"
+    assert data["data"]["movie_id"] == 260
+
+
+def test_watch_history_endpoint(client):
+    payload = {"user_id": 999, "movie_id": 1, "watch_percentage": 0.85, "completed": True}
+    response = client.post("/api/v1/watch-history", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["data"]["event"]["watch_percentage"] == 0.85
+
+
+def test_user_profile_endpoint(client):
+    response = client.get("/api/v1/users/15/profile")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user_id"] == 15
+    assert data["total_ratings"] > 0
+    assert "top_genres" in data
+    assert len(data["top_genres"]) > 0
+
+
+def test_user_recommendations_endpoint(client):
+    response = client.get("/api/v1/users/15/recommendations?n=5")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user_id"] == 15
+    assert len(data["recommendations"]) == 5
+
