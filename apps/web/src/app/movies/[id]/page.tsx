@@ -48,7 +48,6 @@ export default function MovieDetailPage({
   const [ratedSuccess, setRatedSuccess] = useState(false);
   const [isRatingOpen, setIsRatingOpen] = useState(false);
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
-  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
   const [inWatchlist, setInWatchlist] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -232,13 +231,6 @@ export default function MovieDetailPage({
 
               {/* Action Buttons Row */}
               <div className="flex flex-wrap items-center gap-3 mb-6">
-                <Button
-                  onClick={() => setIsTrailerOpen(true)}
-                  className="cursor-pointer bg-[#e50914] hover:bg-[#ff1e2b] text-white font-extrabold h-11 px-7 rounded-full shadow-xl shadow-[#e50914]/40 gap-2 text-sm transition-transform active:scale-95"
-                >
-                  <Play className="h-4 w-4 fill-white" /> Watch Trailer
-                </Button>
-
                 <Button
                   variant="outline"
                   onClick={() => setInWatchlist((prev) => !prev)}
@@ -461,41 +453,6 @@ export default function MovieDetailPage({
             )}
           </div>
         </div>
-
-        {/* Trailer Modal Popup */}
-        {isTrailerOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
-            <div className="relative w-full max-w-4xl bg-[#11131a] rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <Film className="h-5 w-5 text-[#e50914]" />
-                  <h3 className="font-bold text-white text-base md:text-lg">
-                    {movie.clean_title || movie.title} - Official Trailer
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsTrailerOpen(false)}
-                  className="cursor-pointer text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="relative aspect-video w-full bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
-                    (movie.clean_title || movie.title) + " official trailer"
-                  )}&autoplay=1`}
-                  title={`${movie.title} Trailer`}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );

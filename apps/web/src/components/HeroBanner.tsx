@@ -26,7 +26,6 @@ interface HeroBannerProps {
 
 export default function HeroBanner({ spotlights }: HeroBannerProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isTrailerOpen, setIsTrailerOpen] = useState(false);
   const [inWatchlist, setInWatchlist] = useState<Record<number, boolean>>({});
   const [isLiked, setIsLiked] = useState<Record<number, boolean>>({});
   const [isMuted, setIsMuted] = useState(true);
@@ -81,7 +80,7 @@ export default function HeroBanner({ spotlights }: HeroBannerProps) {
           <div className="absolute inset-0 bg-gradient-to-r from-[#090a0f]/80 via-transparent to-[#090a0f]/80 z-10" />
         </div>
 
-        {/* Top Header Row (AI Match badge / clean spacer) */}
+        {/* Top Header Row (AI Match badge / Featured indicator) */}
         <div className="relative z-20 flex items-center justify-between w-full">
           {currentMovie.match_score ? (
             <span className="bg-black/60 backdrop-blur-md border border-white/15 text-emerald-400 font-bold text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
@@ -89,18 +88,15 @@ export default function HeroBanner({ spotlights }: HeroBannerProps) {
               {Math.min(100, Math.round((currentMovie.match_score / 5) * 100))}% AI Match
             </span>
           ) : (
-            <span />
+            <span className="bg-black/60 backdrop-blur-md border border-white/15 text-gray-300 font-medium text-xs px-3 py-1 rounded-full flex items-center gap-1.5 shadow-lg">
+              <Film className="h-3.5 w-3.5 text-[#e50914]" />
+              Spotlight
+            </span>
           )}
 
-          {/* Quick Trailer Button */}
-          <button
-            type="button"
-            onClick={() => setIsTrailerOpen(true)}
-            className="cursor-pointer flex items-center gap-1.5 bg-black/50 hover:bg-white/15 text-gray-300 hover:text-white backdrop-blur-md border border-white/15 px-3 py-1 rounded-full text-xs font-medium transition-colors"
-          >
-            <Film className="h-3.5 w-3.5 text-[#e50914]" />
-            Trailer
-          </button>
+          <span className="text-[11px] font-semibold text-gray-400 bg-black/40 backdrop-blur-md border border-white/10 px-2.5 py-0.5 rounded-full">
+            Featured
+          </span>
         </div>
 
         {/* Center Main Hero Content (Completely Centered Layout) */}
@@ -234,43 +230,6 @@ export default function HeroBanner({ spotlights }: HeroBannerProps) {
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>
-
-        {/* Trailer Modal Popup */}
-        {isTrailerOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
-            <div className="relative w-full max-w-4xl bg-[#11131a] rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-                <div className="flex items-center gap-2">
-                  <Film className="h-5 w-5 text-[#e50914]" />
-                  <h3 className="font-bold text-white text-base md:text-lg">
-                    {currentMovie.clean_title || currentMovie.title} - Official Trailer
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsTrailerOpen(false)}
-                  className="cursor-pointer text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Video Player Embed */}
-              <div className="relative aspect-video w-full bg-black">
-                <iframe
-                  src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(
-                    (currentMovie.clean_title || currentMovie.title) + " official trailer"
-                  )}&autoplay=1`}
-                  title={`${currentMovie.title} Trailer`}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-            </div>
-          </div>
-        )}
       </section>
     </div>
   );
