@@ -83,6 +83,22 @@ def similar_movies(movie_id: int, n: int = Query(10, ge=1, le=30)):
     return {"similar_movies": rec_service.get_similar_movies(movie_id, n=n)}
 
 
+@app.get("/api/v1/movies/{movie_id}/vector-similar")
+def vector_similar_movies(
+    movie_id: int,
+    n: int = Query(10, ge=1, le=30),
+    metric: str = Query("cosine", description="Distance metric: cosine, dot, or euclidean"),
+):
+    """
+    Phase 9: Retrieve nearest neighbor movies via 64-dimensional dense vector embeddings.
+    """
+    return {
+        "movie_id": movie_id,
+        "metric": metric,
+        "similar_movies": rec_service.get_vector_similar_movies(movie_id, n=n, metric=metric),
+    }
+
+
 @app.get("/api/v1/spotlights")
 def spotlight_movies(count: int = Query(5, ge=1, le=10)):
     """Retrieve top spotlight movies with high-res backdrops for hero banner."""

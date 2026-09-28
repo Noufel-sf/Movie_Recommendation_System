@@ -8,6 +8,8 @@ from ml.src.models.content_based import ContentBasedRecommender
 from ml.src.models.matrix_factorization import ExplicitSGDMatrixFactorization
 from ml.src.models.hybrid import HybridRecommender
 from ml.src.models.cold_start import ColdStartOnboardingEngine
+from ml.src.models.vector_search import VectorSearchEngine
+from ml.src.features.embeddings import MovieEmbeddingGenerator
 
 # Curated fallback posters by genre
 GENRE_FALLBACK_IMAGES = {
@@ -43,6 +45,7 @@ class RecommendationEngineService:
         self.mf_model: ExplicitSGDMatrixFactorization = None
         self.hybrid_model: HybridRecommender = None
         self.cold_start_engine: ColdStartOnboardingEngine = None
+        self.vector_search_engine: VectorSearchEngine = None
 
         # Dynamic user additions
         self.dynamic_ratings: list[dict] = []
@@ -106,6 +109,19 @@ class RecommendationEngineService:
             idx_to_movie_id=self.content_model.idx_to_movie_id,
         )
 
+        print("Initializing Vector Search Engine...")
+        embeddings_path = self.data_dir / "movie_embeddings.parquet"
+        if embeddings_path.exists():
+            emb_df = pd.read_parquet(embeddings_path)
+            embeddings = np.array(emb_df["embedding"].tolist(), dtype=np.float32)
+            movie_ids = emb_df["movie_id"].astype(int).tolist()
+        else:
+            generator = MovieEmbeddingGenerator(target_dim=64)
+            embeddings = generator.fit_transform(self.movies_df, self.ratings_df)
+            movie_ids = generator.movie_ids
+
+        self.vector_search_engine = VectorSearchEngine(embeddings=embeddings, movie_ids=movie_ids)
+
         print("RecommendationEngineService ready!")
 
     def _enrich_movie(self, movie_dict: dict) -> dict:
@@ -162,6 +178,21 @@ class RecommendationEngineService:
             detail = self.get_movie_detail(mid)
             if detail:
                 detail["similarity_score"] = round(float(sim), 3)
+                results.append(detail)
+        return results
+
+    def get_vector_similar_movies(self, movie_id: int, n: int = 10, metric: str = "cosine"):
+        if not self.vector_search_engine:
+            return self.get_similar_movies(movie_id, n=n)
+
+        similar_tuples = self.vector_search_engine.search_similar_movies(movie_id, n=n, metric=metric)
+        results = []
+        for mid, sim in similar_tuples:
+            detail = self.get_movie_detail(mid)
+            if detail:
+                detail["similarity_score"] = round(float(sim), 3)
+                detail["vector_metric"] = metric
+                detail["explanation"] = f"pgvector 64-d HNSW Nearest Neighbor ({metric.upper()} space)"
                 results.append(detail)
         return results
 
