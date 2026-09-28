@@ -117,6 +117,8 @@ class ContentBasedRecommender(BaseRecommender):
         top_indices = np.argsort(similarities)[::-1][:n]
         return [(self.idx_to_movie_id[idx], float(similarities[idx])) for idx in top_indices]
 
+    get_similar_movies = similar_movies
+
     def predict(self, user_id: int, movie_id: int) -> float:
         """
         Predict affinity on scale [0.5, 5.0] via Cosine Similarity between

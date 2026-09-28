@@ -38,6 +38,17 @@ def test_movie_detail():
         assert "Toy Story" in data["title"]
 
 
+def test_similar_movies_endpoint():
+    with TestClient(app) as test_client:
+        response = test_client.get("/api/v1/movies/1/similar?n=6")
+        assert response.status_code == 200
+        data = response.json()
+        assert "similar_movies" in data
+        assert len(data["similar_movies"]) == 6
+        assert "clean_title" in data["similar_movies"][0]
+        assert "similarity_score" in data["similar_movies"][0]
+
+
 def test_recommendations_endpoint():
     with TestClient(app) as test_client:
         response = test_client.get("/api/v1/recommendations?user_id=15&n=5")

@@ -149,7 +149,14 @@ class RecommendationEngineService:
         return self._enrich_movie(item)
 
     def get_similar_movies(self, movie_id: int, n: int = 10):
-        similar_tuples = self.content_model.get_similar_movies(movie_id, n=n)
+        similar_tuples = []
+        if self.content_model and hasattr(self.content_model, "similar_movies"):
+            similar_tuples = self.content_model.similar_movies(movie_id, n=n)
+
+        # Fallback to SVD latent space similarity if content model returns empty
+        if not similar_tuples and self.mf_model and hasattr(self.mf_model, "similar_items") and movie_id in self.mf_model.movie_to_idx:
+            similar_tuples = self.mf_model.similar_items(movie_id, n=n)
+
         results = []
         for mid, sim in similar_tuples:
             detail = self.get_movie_detail(mid)
