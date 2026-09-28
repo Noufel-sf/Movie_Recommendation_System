@@ -7,6 +7,7 @@ from ml.src.models.baseline import IMDBWeightedRecommender, TimeDecayPopularityR
 from ml.src.models.content_based import ContentBasedRecommender
 from ml.src.models.matrix_factorization import ExplicitSGDMatrixFactorization
 from ml.src.models.hybrid import HybridRecommender
+from ml.src.models.cold_start import ColdStartOnboardingEngine
 
 # Curated fallback posters by genre
 GENRE_FALLBACK_IMAGES = {
@@ -41,6 +42,7 @@ class RecommendationEngineService:
         self.content_model: ContentBasedRecommender = None
         self.mf_model: ExplicitSGDMatrixFactorization = None
         self.hybrid_model: HybridRecommender = None
+        self.cold_start_engine: ColdStartOnboardingEngine = None
 
         # Dynamic user additions
         self.dynamic_ratings: list[dict] = []
@@ -96,6 +98,14 @@ class RecommendationEngineService:
             popularity_model=self.popularity_model,
         ).fit(self.ratings_df, self.movies_df)
 
+        print("Fitting Cold-Start Onboarding Engine...")
+        self.cold_start_engine = ColdStartOnboardingEngine(
+            movies_df=self.movies_df,
+            movie_vectors=self.content_model.movie_vectors,
+            movie_id_to_idx=self.content_model.movie_id_to_idx,
+            idx_to_movie_id=self.content_model.idx_to_movie_id,
+        )
+
         print("RecommendationEngineService ready!")
 
     def _enrich_movie(self, movie_dict: dict) -> dict:
@@ -108,49 +118,61 @@ class RecommendationEngineService:
         movie_dict["genres_list"] = genres_list
         primary_genre = genres_list[0] if genres_list else "Default"
 
-        movie_dict["poster_url"] = meta.get("poster_path") or meta.get("poster_url") or GENRE_FALLBACK_IMAGES.get(primary_genre, GENRE_FALLBACK_IMAGES["Default"])
-        movie_dict["backdrop_url"] = meta.get("backdrop_path") or meta.get("backdrop_url") or movie_dict["poster_url"]
-        movie_dict["overview"] = meta.get("overview") or f"{movie_dict.get('clean_title', movie_dict.get('title'))} is a classic {genres_raw.replace('|', ' / ')} production."
-        movie_dict["runtime"] = meta.get("runtime") or 118
-        movie_dict["vote_average"] = meta.get("vote_average") or round(self.popularity_model.predict(0, movie_dict["movie_id"]), 1)
+        movie_dict["poster_url"] = meta.get("poster_url") or GENRE_FALLBACK_IMAGES.get(primary_genre, GENRE_FALLBACK_IMAGES["Default"])
+        movie_dict["backdrop_url"] = meta.get("backdrop_url") or GENRE_FALLBACK_IMAGES.get(primary_genre, GENRE_FALLBACK_IMAGES["Default"])
+        movie_dict["overview"] = meta.get("overview") or f"{movie_dict.get('clean_title', movie_dict.get('title'))} is an acclaimed production in the MovieLens catalog."
+        movie_dict["vote_average"] = meta.get("vote_average") or round(float(movie_dict.get("score", 4.2)), 1)
         movie_dict["vote_count"] = meta.get("vote_count") or 1200
-        movie_dict["score"] = round(self.popularity_model.predict(0, movie_dict["movie_id"]), 2)
+        movie_dict["runtime"] = meta.get("runtime") or 118
         return movie_dict
 
-    def get_movies(self, page: int = 1, page_size: int = 20, genre: str = None, query: str = None):
+    def get_movies(self, page: int = 1, page_size: int = 24, genre: str = None, query: str = None):
         df = self.movies_df
-        if genre and genre.lower() != "all":
+        if genre and genre != "All":
             df = df[df["genres"].str.contains(genre, case=False, na=False)]
-        if query and query.strip():
-            df = df[df["title"].str.contains(query.strip(), case=False, na=False)]
+        if query:
+            df = df[df["title"].str.contains(query, case=False, na=False)]
 
         total = len(df)
         start = (page - 1) * page_size
         end = start + page_size
         items = df.iloc[start:end].to_dict(orient="records")
 
-        enriched = [self._enrich_movie(item) for item in items]
-        return {"items": enriched, "total": total, "page": page, "page_size": page_size}
+        enriched_items = [self._enrich_movie(item) for item in items]
+        return {"items": enriched_items, "total": total, "page": page, "page_size": page_size}
 
     def get_movie_detail(self, movie_id: int):
-        match = self.movies_df[self.movies_df["movie_id"] == movie_id]
-        if match.empty:
+        matches = self.movies_df[self.movies_df["movie_id"] == movie_id]
+        if matches.empty:
             return None
-        item = match.iloc[0].to_dict()
+        item = matches.iloc[0].to_dict()
         return self._enrich_movie(item)
 
     def get_similar_movies(self, movie_id: int, n: int = 10):
-        content_sims = self.content_model.similar_movies(movie_id, n=n)
+        similar_tuples = self.content_model.get_similar_movies(movie_id, n=n)
         results = []
-        for mid, sim in content_sims:
+        for mid, sim in similar_tuples:
             detail = self.get_movie_detail(mid)
             if detail:
-                detail["similarity_score"] = round(sim, 3)
+                detail["similarity_score"] = round(float(sim), 3)
                 results.append(detail)
         return results
 
     def get_recommendations(self, user_id: int, n: int = 10, model_type: str = "hybrid"):
-        user_has_history = user_id in self.mf_model.user_to_idx
+        # Check if user has an onboarded cold-start centroid
+        has_cold_start = self.cold_start_engine and user_id in self.cold_start_engine.user_centroids
+        user_has_history = user_id in self.mf_model.user_to_idx or has_cold_start
+
+        if has_cold_start and model_type in ["hybrid", "content"]:
+            recs_with_reasons = self.cold_start_engine.recommend(user_id, n=n, exclude_seen=True)
+            results = []
+            for mid, score, explanation in recs_with_reasons:
+                detail = self.get_movie_detail(mid)
+                if detail:
+                    detail["match_score"] = round(float(score), 2)
+                    detail["explanation"] = explanation
+                    results.append(detail)
+            return results
 
         if model_type == "content":
             recs_to_format = self.content_model.recommend(user_id, n=n, exclude_seen=True)
@@ -190,7 +212,6 @@ class RecommendationEngineService:
 
     def get_spotlights(self, count: int = 5):
         """Top spotlight movies with rich backdrops and synopses for the hero carousel."""
-        # Pick top acclaimed movies with backdrops in cache
         cached_mids = [int(m) for m in self.tmdb_cache.keys()]
         popular_cached = [mid for mid, _ in self.popularity_model.ranked_movies if mid in cached_mids]
         selected = popular_cached[:count]
@@ -201,6 +222,27 @@ class RecommendationEngineService:
             if detail and detail.get("backdrop_url"):
                 spotlights.append(detail)
         return spotlights
+
+    def get_onboarding_candidates(self, per_genre: int = 2):
+        if not self.cold_start_engine:
+            return []
+        candidates = self.cold_start_engine.get_onboarding_candidates(per_genre=per_genre)
+        return [self._enrich_movie(c) for c in candidates]
+
+    def complete_onboarding(self, user_id: int, selected_movie_ids: list[int]):
+        centroid = self.cold_start_engine.initialize_user_profile(user_id, selected_movie_ids)
+        # Seed content model user profile & history
+        if user_id not in self.content_model.user_history:
+            self.content_model.user_history[user_id] = []
+        for mid in selected_movie_ids:
+            self.content_model.user_history[user_id].append((mid, 5.0))
+        self.content_model.user_profiles[user_id] = centroid
+        return {
+            "user_id": user_id,
+            "selected_count": len(selected_movie_ids),
+            "status": "profile_initialized",
+            "message": "Cold-start taste centroid generated. Real-time personalized recommendations active.",
+        }
 
     def add_rating(self, user_id: int, movie_id: int, rating: float):
         entry = {"user_id": user_id, "movie_id": movie_id, "rating": rating}

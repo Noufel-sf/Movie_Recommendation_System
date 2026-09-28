@@ -36,6 +36,11 @@ class RatingSubmission(BaseModel):
     rating: float = Field(ge=0.5, le=5.0, description="Rating between 0.5 and 5.0")
 
 
+class OnboardingSubmission(BaseModel):
+    user_id: int = Field(gt=0, description="Target user ID (e.g. 999)")
+    selected_movie_ids: list[int] = Field(..., min_length=1, max_length=20, description="Selected seed movie IDs")
+
+
 @app.get("/api/v1/health")
 def health_check():
     return {"status": "ok", "service": "Movie Recommendation API"}
@@ -115,3 +120,24 @@ def submit_rating(submission: RatingSubmission):
         rating=submission.rating,
     )
     return {"message": "Rating recorded successfully", "rating": result}
+
+
+@app.get("/api/v1/onboarding/candidates")
+def onboarding_candidates(per_genre: int = Query(2, ge=1, le=5)):
+    """
+    Retrieve diverse, high-recognition seed movies across core genres for new user onboarding.
+    """
+    candidates = rec_service.get_onboarding_candidates(per_genre=per_genre)
+    return {"candidates": candidates, "total": len(candidates)}
+
+
+@app.post("/api/v1/onboarding")
+def complete_onboarding(submission: OnboardingSubmission):
+    """
+    Submit user onboarding selections to instantly synthesize their taste centroid vector.
+    """
+    result = rec_service.complete_onboarding(
+        user_id=submission.user_id,
+        selected_movie_ids=submission.selected_movie_ids,
+    )
+    return result

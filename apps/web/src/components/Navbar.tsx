@@ -27,6 +27,7 @@ interface NavbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onFilterClick?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export default function Navbar({
@@ -35,6 +36,7 @@ export default function Navbar({
   searchQuery,
   onSearchChange,
   onFilterClick,
+  onOpenOnboarding,
 }: NavbarProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -291,6 +293,9 @@ export default function Navbar({
                         onClick={() => {
                           onUserChange(u.id);
                           setIsUserDropdownOpen(false);
+                          if (u.id === 999 && onOpenOnboarding) {
+                            onOpenOnboarding();
+                          }
                         }}
                         className={`cursor-pointer w-full text-left p-2 rounded-xl flex items-center gap-3 transition-colors ${
                           isSelected ? "bg-[#e50914]/20 border border-[#e50914]/40" : "hover:bg-white/5"
